@@ -2,7 +2,23 @@ import { Button, TextArea } from "@radix-ui/themes";
 import { useMemo, useState } from "react";
 
 function App() {
-  const [inputJson, setInputJson] = useState("");
+  const [inputJson, setInputJson] = useState(() => {
+    const url = new URL(window.location.href);
+    const json = url.searchParams.get("data");
+
+    if (json) {
+      try {
+        const string = atob(json);
+        JSON.parse(string);
+
+        return string;
+      } catch {
+        return "";
+      }
+    }
+
+    return "";
+  });
   const output = useMemo(() => {
     return inputJson
       .split("\n")
@@ -17,13 +33,27 @@ function App() {
       .join("\n");
   }, [inputJson]);
 
+  function share() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("data", btoa(inputJson));
+    navigator.clipboard.writeText(url.toString());
+  }
+
   function copy() {
     navigator.clipboard.writeText(output);
   }
 
   return (
     <div className="grid grid-rows-[60px,auto] w-screen h-screen">
-      <div className="flex justify-center items-center p-4 w-full">
+      <div className="flex gap-4 justify-center items-center p-4 w-full">
+        <Button
+          disabled={!inputJson.length}
+          className="mt-4"
+          variant="ghost"
+          onClick={share}
+        >
+          Share
+        </Button>
         <Button className="mt-4" onClick={copy}>
           Copy
         </Button>
